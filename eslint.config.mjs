@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Scratch worktrees are whole copies of the repo, build output and all.
+    // The ignores above are root-relative, so without this `npm run lint`
+    // walks into every worktree and reports thousands of problems that CI,
+    // running on a fresh checkout, never sees.
+    ".claude/**",
   ]),
 ]);
 
