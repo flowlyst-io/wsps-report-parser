@@ -4,19 +4,19 @@
 
 ## What this project is
 
-A client-side web app that turns a WSPS Detailed Expenditure Report CSV into four derived datasets — Elements, Chart of Accounts, Budget Tracker, Purchase Order — downloadable as CSV or as a ZIP. Next.js 16, React 19, TypeScript, Tailwind 4, about 1,100 lines. Everything runs in the browser: no backend, no database, no auth, nothing uploaded. [`README.md`](README.md) describes the app.
+A client-side web app that turns a WSPS Detailed Expenditure Report CSV into four derived datasets — Elements, Chart of Accounts, Budget Tracker, Purchase Order — downloadable as CSV or as a ZIP. Next.js 16, React 19, TypeScript, Tailwind 4, about 1,100 lines. Everything runs in the browser: no backend, no database, no auth, nothing sent to a server. [`README.md`](README.md) describes the app.
 
-**The user is one person in the West Springfield Public Schools business office.** They run their ERP export through this app and import the results into Budget Tracker. They use the app; they do not review changes. Their failure mode is a number that is quietly wrong, not a crash.
+**The user is one person in the West Springfield Public Schools business office.** They run their ERP export through this app and import the results into Budget Tracker. They use the app; they do not review changes.
 
 Tural is the only person who builds here. Private repo in the `flowlyst-io` GitHub org. The scope here is deliberately small, which is why this file is short.
 
 ## The PRD is Tural's
 
-[`docs/PRD.md`](docs/PRD.md) is his product spec, written by him in October 2025. **Do not contradict it, extend it, or restate it here.** This file says how work runs. It never says what the product should be.
+[`docs/PRD.md`](docs/PRD.md) is his product spec, written by him in October 2025. **Do not contradict it, extend it, or re-specify it here.** This file says how work runs. It never says what the product should be.
 
 So: no roadmap, no phased plan, no MVP split, no feature list, no success criteria. When a product question comes up, ask him and let him answer. Requirements flow from him; engineering flows from you.
 
-**The app stays client-side.** That is his design, stated in the PRD. Adding a backend, a database, or an upload is a product decision and a technology gate at once — his word first.
+**The app stays client-side.** That is his design, stated in the PRD. Adding a backend, a database, or anything that sends the file to a server is a product decision and a technology gate at once — his word first.
 
 **His gates, and they are the only ones:**
 
@@ -44,12 +44,10 @@ You, the session lead, plan the work and adjudicate the findings; production goe
 
 **Evidence before any done-claim.** Ran-X-observed-Y, with counts, in every PR body and at every agent boundary. A claim that cannot carry evidence is a hypothesis, and saying so is the right move. **An empty or skipped check is a red state, not a green one** — a check that ran over nothing has not run, and stating the count is what makes the empty case visible instead of silent.
 
-**The honest state today: no test framework has been chosen, and there are no tests.** Choosing one is a technology gate — his word first, as the one-screen comparison above. Until then, `lint` and `build` are the whole of the automated checking.
-
-The sensitive surface is the money math: the segment padding, the account-code concatenation, and the sums. Wrong numbers there reach the user looking correct. Nothing tests them today. That is the state of the repo, not a policy about what must be tested.
+**The honest state today: no test framework has been chosen, and there are no tests.** Choosing one is a technology gate — his word first, as the one-screen comparison above. Until then, `lint` and `build` are the whole of the automated checking, and neither one checks that any output value is correct.
 
 ## Customer data
 
 Real WSPS financial data runs through this app — account codes, vendor names, salary lines — and sample exports sit on disk.
 
-**Never commit a CSV.** `*.csv` and `*.CSV` are gitignored. The repo's history was purged of one on 2026-09-09. If sample data comes up in a discussion, describe its shape; never paste the rows.
+**Never commit a CSV.** `*.csv` and `*.CSV` are gitignored. The repo's history was purged of one on 2026-09-09.

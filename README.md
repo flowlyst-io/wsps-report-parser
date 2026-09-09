@@ -118,8 +118,7 @@ The application maps CSV columns to internal fields:
 │   ├── datasetGenerators.ts # Dataset generation functions
 │   └── exportUtils.ts    # CSV/ZIP export utilities
 └── docs/
-    ├── PRD.md            # Product Requirements Document
-    └── DETAILED EXPENDITURE REPORT ON 10_24_2025.CSV # Sample data
+    └── PRD.md            # Product Requirements Document
 ```
 
 ## Privacy & Security
