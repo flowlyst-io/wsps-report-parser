@@ -6,6 +6,13 @@ import {
   PurchaseOrderRow,
 } from './types';
 
+/**
+ * Rounds a number to 2 decimal places to avoid floating-point precision issues
+ */
+function roundToTwoDecimals(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 // Segment names for the Elements dataset
 const SEGMENT_NAMES = [
   'Segment 1', 'Segment 2', 'Segment 3', 'Segment 4',
@@ -111,7 +118,12 @@ export function generateBudgetTracker(formattedData: FormattedDataRow[]): Budget
     }
   });
 
-  return Array.from(budgetMap.values());
+  return Array.from(budgetMap.values()).map((row) => ({
+    ...row,
+    Budget: roundToTwoDecimals(row.Budget),
+    Expense: roundToTwoDecimals(row.Expense),
+    Encumbrance: roundToTwoDecimals(row.Encumbrance),
+  }));
 }
 
 /**
@@ -129,8 +141,8 @@ export function generatePurchaseOrder(formattedData: FormattedDataRow[]): Purcha
     'Account': row.FullAccountCode,
     'Description': row.AccountDescription,
     'PO Date': row.effdate,
-    'Expense': row.sumexp,
-    'Encumbrance': row.sumenc,
+    'Expense': roundToTwoDecimals(row.sumexp),
+    'Encumbrance': roundToTwoDecimals(row.sumenc),
     'PO Number': row.ponum,
     'Vendor': row.name,
     'Item Description': row.descrip_a,
