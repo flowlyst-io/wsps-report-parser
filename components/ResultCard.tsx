@@ -2,24 +2,24 @@
 
 import { useState } from 'react';
 
-interface ResultCardProps {
+interface ResultCardProps<T extends object> {
   title: string;
-  data: Record<string, unknown>[];
+  data: T[];
   onDownload: () => void;
   previewLimit?: number;
 }
 
-export default function ResultCard({
+export default function ResultCard<T extends object>({
   title,
   data,
   onDownload,
   previewLimit = 20,
-}: ResultCardProps) {
+}: ResultCardProps<T>) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   if (data.length === 0) return null;
 
-  const columns = Object.keys(data[0]);
+  const columns = Object.keys(data[0]) as (keyof T & string)[];
   const previewData = data.slice(0, previewLimit);
   const totalRows = data.length;
 

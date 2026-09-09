@@ -10,7 +10,7 @@ import {
 /**
  * Converts an array of objects to CSV string WITHOUT headers
  */
-function arrayToCSV<T extends Record<string, unknown>>(data: T[]): string {
+function arrayToCSV<T extends object>(data: T[]): string {
   return Papa.unparse(data, {
     header: false, // No headers in the CSV output
   });
