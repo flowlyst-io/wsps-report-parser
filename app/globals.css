@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Flowlyst brand tokens — see "flowlyst - Brand Book" (2021).
+  Main colours:      #00A568 green, #404041 dark, #FFFFFF white.
+  Secondary colours: #5F5AA2 purple, #D9D9D9 light grey.
+  The brand book forbids changing the brand colours. The two values below that
+  are not in the book are marked; both are interaction/feedback states the book
+  does not cover.
+*/
+@theme {
+  --color-brand: #00a568;
+  --color-brand-hover: #008a57; /* not in the book: pressed/hover state only */
+  --color-brand-tint: #e6f6ef;
+
+  --color-ink: #404041;
+  --color-ink-soft: #6f6f70;
+  --color-ink-faint: #767677;
+
+  --color-line: #d9d9d9;
+  --color-line-soft: #ececec;
+
+  --color-accent: #5f5aa2;
+
+  --color-danger: #b02a21; /* not in the book: error state only */
+  --color-danger-tint: #fbeceb;
+
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/*
+  The brand is a light identity; the book defines no dark palette, so the app
+  stays light rather than half-applying a dark theme.
+*/
+html {
+  color-scheme: light;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1.125rem; /* book: body Regular, size 18 */
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard focus stays visible everywhere, in the brand green. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

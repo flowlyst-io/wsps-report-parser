@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Nunito } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Brand book, "Corporate font": Nunito, Bold for titles, Light/Regular for body.
+// next/font self-hosts the files at build time, so the page makes no request to
+// Google at runtime and the app stays free of network calls.
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "WSPS Report Parser - Flowlyst",
-  description: "Transform WSPS Detailed Expenditure Reports into structured datasets",
+  title: "WSPS Detailed Expenditure Report Parser — Flowlyst",
+  description:
+    "Turn a WSPS Detailed Expenditure Report export into the four files Budget Tracker needs. Runs entirely in your browser.",
+  icons: { icon: "/flowlyst-icon.svg" },
 };
 
 export default function RootLayout({
@@ -23,12 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+    <html lang="en" className={nunito.variable}>
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

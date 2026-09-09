@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useCallback } from 'react';
 import UploadZone from '@/components/UploadZone';
 import ResultCard from '@/components/ResultCard';
@@ -20,6 +21,13 @@ import {
 } from '@/lib/exportUtils';
 import { ProcessedData } from '@/lib/types';
 
+const STEPS = [
+  'Export the Detailed Expenditure Report from your ERP as a CSV.',
+  'Drop it on the box above.',
+  'Check the row counts and the previews.',
+  'Download the four files, or all four as one ZIP.',
+];
+
 export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +39,7 @@ export default function Home() {
     // Reset state
     setError(null);
     setProcessedData(null);
+    setRowCount(undefined);
     setFileName(file.name);
     setIsProcessing(true);
 
@@ -70,7 +79,11 @@ export default function Home() {
         purchaseOrder,
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while processing the file');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong while reading the file.'
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -88,73 +101,85 @@ export default function Home() {
   }, [processedData]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                WSPS Detailed Expenditure Report Parser
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Powered by Flowlyst
-              </p>
-            </div>
-            <div className="text-sm text-gray-500 font-medium">
-              v1.0
-            </div>
-          </div>
+    <div className="min-h-screen bg-white">
+      <header className="border-b border-line-soft">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-5">
+          <Image
+            src="/flowlyst-logo.svg"
+            alt="Flowlyst"
+            width={522}
+            height={113}
+            priority
+            className="h-8 w-auto"
+          />
+          <span className="text-base text-ink-faint">v1.0</span>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-        {/* Upload Section */}
-        <div className="mb-8">
+      <main className="mx-auto max-w-6xl px-6 pb-24 pt-12">
+        <div className="max-w-2xl">
+          <h1 className="text-[2rem] font-extrabold leading-[1.15] tracking-tight text-ink sm:text-[2.375rem]">
+            WSPS Detailed Expenditure Report Parser
+          </h1>
+          <p className="mt-4 text-ink-soft">
+            Turn one ERP export into the four files Budget Tracker needs:
+            Elements, Chart of Accounts, Budget Tracker and Purchase Order.
+          </p>
+        </div>
+
+        <div className="mt-10">
           <UploadZone
             onFileSelect={handleFileSelect}
             isProcessing={isProcessing}
             error={error}
             fileName={fileName}
             rowCount={rowCount}
+            isComplete={processedData !== null}
           />
         </div>
 
-        {/* Results Section */}
+        {!processedData && !isProcessing && (
+          <div className="mt-12 max-w-2xl">
+            <h2 className="text-xl font-bold text-ink">How this works</h2>
+            <ol className="mt-5 space-y-4">
+              {STEPS.map((step, index) => (
+                <li key={step} className="flex gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-base font-extrabold text-ink"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="text-ink-soft">{step}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-8 border-t border-line-soft pt-6 text-base text-ink-soft">
+              Your file never leaves this computer. It is read in the browser,
+              and nothing is uploaded to a server or stored anywhere.
+            </p>
+          </div>
+        )}
+
         {processedData && (
-          <div className="space-y-6">
-            {/* Download All Button */}
-            <div className="flex justify-end">
+          <div className="mt-12">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="text-2xl font-bold text-ink">Your four files</h2>
               <button
+                type="button"
                 onClick={handleDownloadAll}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+                className="rounded-xl bg-brand px-6 py-3 text-[1.1875rem] font-bold text-white transition-colors duration-150 hover:bg-brand-hover"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                Download All (.zip)
+                Download all (.zip)
               </button>
             </div>
 
-            {/* Result Cards */}
-            <div className="space-y-4">
+            <div className="mt-6 divide-y divide-line-soft overflow-hidden rounded-2xl border border-line">
               <ResultCard
                 title="Elements"
                 data={processedData.elements}
                 onDownload={() => downloadElements(processedData.elements)}
               />
-
               <ResultCard
                 title="Chart of Accounts"
                 data={processedData.chartOfAccounts}
@@ -162,46 +187,28 @@ export default function Home() {
                   downloadChartOfAccounts(processedData.chartOfAccounts)
                 }
               />
-
               <ResultCard
                 title="Budget Tracker"
                 data={processedData.budgetTracker}
-                onDownload={() => downloadBudgetTracker(processedData.budgetTracker)}
+                onDownload={() =>
+                  downloadBudgetTracker(processedData.budgetTracker)
+                }
               />
-
               <ResultCard
                 title="Purchase Order"
                 data={processedData.purchaseOrder}
-                onDownload={() => downloadPurchaseOrder(processedData.purchaseOrder)}
+                onDownload={() =>
+                  downloadPurchaseOrder(processedData.purchaseOrder)
+                }
               />
             </div>
           </div>
         )}
-
-        {/* Instructions */}
-        {!processedData && !isProcessing && (
-          <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
-            <h2 className="text-lg font-semibold text-blue-900 mb-3">
-              How to use:
-            </h2>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
-              <li>Export the Detailed Expenditure Report from your ERP system as a CSV file</li>
-              <li>Upload the CSV file using the drop zone above</li>
-              <li>Wait for processing to complete (typically 2-5 seconds)</li>
-              <li>Review the generated datasets in the preview tables</li>
-              <li>Download individual datasets or all datasets as a ZIP file</li>
-            </ol>
-            <p className="text-sm text-blue-700 mt-4">
-              All processing happens locally in your browser. No data is sent to any server.
-            </p>
-          </div>
-        )}
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16 py-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-gray-500">
-          <p>© 2025 Flowlyst. All rights reserved.</p>
+      <footer className="border-t border-line-soft">
+        <div className="mx-auto max-w-6xl px-6 py-6 text-base text-ink-faint">
+          Built by Flowlyst for West Springfield Public Schools.
         </div>
       </footer>
     </div>
