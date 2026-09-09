@@ -8,7 +8,7 @@ A client-side web app that turns a WSPS Detailed Expenditure Report CSV into fou
 
 **The user is one person in the West Springfield Public Schools business office.** They run their ERP export through this app and import the results into Budget Tracker. They use the app; they do not review changes.
 
-Tural is the only person who builds here. Private repo in the `flowlyst-io` GitHub org. The scope here is deliberately small, which is why this file is short.
+Tural is the only person who builds here. Public repo in the `flowlyst-io` GitHub org — public so that Vercel's free Hobby plan will deploy it, since Hobby will not deploy a private repo owned by an organisation. **Nothing that identifies a person, and no customer data, goes in this repo.** The scope here is deliberately small, which is why this file is short.
 
 ## The PRD is Tural's
 
