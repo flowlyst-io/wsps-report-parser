@@ -38,7 +38,9 @@ You, the session lead, plan the work and adjudicate the findings; production goe
 
 ## Checks and evidence
 
-**Vercel is the intended deploy target. Nothing is connected to it yet** — as of 2026-09-09 the repo has no Vercel project. Tural connects it and operates it; agents never deploy. Once it is connected, Vercel runs `npm run build` on a push and does not publish a build that fails, so a broken build leaves the previous version serving rather than taking the site down.
+**Vercel is connected and serving, since 2026-09-09, at https://wsps-report-parser.vercel.app.** Tural operates it; agents never deploy. A push to `main` deploys on its own. Vercel runs `npm run build` and does not publish a build that fails, so a broken build leaves the previous version serving rather than taking the site down.
+
+Vercel also refuses to publish a build that uses a version of Next.js with a known critical advisory, and it does this **after** the build succeeds. That failure reads as a green build followed by one line — `Vulnerable version of Next.js detected` — so check the end of the deploy log, not the build result. Keeping the Dependabot bumps merged is what avoids it.
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `npm run lint` and `npm run build` on every pull request and on `main`. It earns its place either way: it shows a break on a branch rather than in a failed deploy, and it is the only place lint runs at all — a Next.js 16 build does not run ESLint.
 
