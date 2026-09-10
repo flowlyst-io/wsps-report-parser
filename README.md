@@ -83,16 +83,58 @@ npm start
 A CSV holds only text. A spreadsheet holds typed cells, so each one is turned
 into text by its type, because neither blanket rule is safe:
 
-- **Numbers** use the raw value, not the displayed text. A currency-formatted
-  cell displays as `$1,234.50`, which `parseFloat` reads as `NaN` and the app
-  would then treat as `0` — silently wrong, with no error on screen.
-- **Dates** use the displayed text, not the raw value. A real date cell holds
-  a serial number like `45915`, which would otherwise land in the PO Date
-  column verbatim.
+- **Numbers** use the raw value, not the displayed text. This guards against a
+  currency-formatted cell, which displays as `$1,234.50` — `parseFloat` reads
+  that as `NaN` and the app would treat it as `0`, silently wrong with no error
+  on screen.
+- **Dates** use the displayed text, not the raw value. This guards against a
+  real date cell, which holds a serial number like `45915` that would otherwise
+  land in the PO Date column verbatim.
+- **Booleans** become `TRUE` / `FALSE`.
 - **Everything else** is passed through trimmed. Error cells (`#N/A`, `#REF!`)
   keep their text, which is both what Excel writes to a CSV and what keeps a
   broken cell visible — read as blank, an error in `descrip_b` would quietly
   merge two accounts into one Budget Tracker row.
+
+**Which of these the real export actually exercises.** A census of the
+9/4/2026 `.XLS` — 350,400 populated cells — found 216,056 text cells, 129,546
+numbers, 4,798 booleans, and **zero** date cells, **zero** error cells, zero
+blank or duplicate headers, and a declared range that is exactly honest.
+
+So the text, number and boolean branches are proven against real data. The
+date branch, the error-cell branch, the duplicate-header renaming and both
+halves of the declared-range handling are **not** — they are insurance against
+shapes this export does not currently have. Of 7,197 money cells, the number
+whose displayed text differs from the raw value is zero, so the currency case
+above has never actually arisen here either.
+
+That distinction matters when reading the verification below: it shows the
+common path is correct. It does not show the edge-case handling is.
+
+### Verification
+
+The same report, exported as both `.csv` and `.XLS`, run through the same code
+and compared cell by cell:
+
+| Dataset | From CSV | From .XLS | Mismatched cells |
+|---|---|---|---|
+| Source rows parsed | 2,399 | 2,399 | 0 of 350,254 |
+| Elements | 351 | 351 | 0 of 1,053 |
+| Chart of Accounts | 818 | 818 | 0 of 1,636 |
+| Budget Tracker | 818 | 818 | 0 of 4,090 |
+| Purchase Order | 860 | 860 | 0 of 6,880 |
+
+Every cell was compared, not sampled, and the Budget Tracker figures are
+numbers compared with `===`, so that zero is bit-exact rather than a rounded
+display matching. The source-row comparison covers all 146 columns before any
+transformation, which is what rules out the generators hiding a difference.
+
+Verified independently, by a second party building their own harness against
+merged `main` rather than reusing the first one.
+
+There is no test framework in this project, so this is a one-off measurement
+against one export on one date, not a suite that runs again. It is not a
+guarantee about any future export.
 
 ### Speed
 
