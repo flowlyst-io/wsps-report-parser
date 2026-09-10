@@ -43,6 +43,14 @@ next-env.d.ts
 # customer data — real report exports are never committed
 *.csv
 *.CSV
+*.xls
+*.XLS
+*.xlsx
+*.XLSX
+*.xlsm
+*.XLSM
+*.xlsb
+*.XLSB
 
 # Claude Code: personal settings and scratch worktrees, never shared.
 # A shared .claude/settings.json can still be committed.

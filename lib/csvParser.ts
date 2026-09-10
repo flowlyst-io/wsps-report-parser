@@ -1,17 +1,8 @@
 import Papa from 'papaparse';
 import { SourceDataRow } from './types';
+import { ParseResult, collectHeaderErrors } from './sourceSchema';
 
-export interface ParseResult {
-  data: SourceDataRow[];
-  errors: string[];
-}
-
-// Required headers that must be present in the CSV
-const REQUIRED_HEADERS = [
-  's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 's11', 's12',
-  'sd1', 'sd2', 'sd3', 'sd4', 'sd5', 'sd6', 'sd7', 'sd8', 'sd9', 'sd10', 'sd11', 'sd12',
-  'descrip_b', 'sumapp', 'sumexp', 'sumenc', 'ponum', 'effdate', 'descrip_a', 'name'
-];
+export type { ParseResult };
 
 export function parseCSV(file: File): Promise<ParseResult> {
   return new Promise((resolve) => {
@@ -26,18 +17,7 @@ export function parseCSV(file: File): Promise<ParseResult> {
       // Skip rows with quote errors instead of failing
       skipFirstNLines: 0,
       complete: (results) => {
-        const errors: string[] = [];
-
-        // Validate headers
-        if (results.meta.fields) {
-          const missingHeaders = REQUIRED_HEADERS.filter(
-            (header) => !results.meta.fields!.includes(header)
-          );
-
-          if (missingHeaders.length > 0) {
-            errors.push(`Missing required columns: ${missingHeaders.join(', ')}`);
-          }
-        }
+        const errors = collectHeaderErrors(results.meta.fields);
 
         // Check if we have data
         if (results.data.length === 0) {
@@ -70,19 +50,4 @@ export function parseCSV(file: File): Promise<ParseResult> {
       },
     });
   });
-}
-
-export function validateFile(file: File): string | null {
-  // Check file type
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    return 'Please upload a valid CSV file';
-  }
-
-  // Check file size (max 50MB to be safe)
-  const maxSize = 50 * 1024 * 1024; // 50MB
-  if (file.size > maxSize) {
-    return 'File size exceeds 50MB limit';
-  }
-
-  return null;
 }

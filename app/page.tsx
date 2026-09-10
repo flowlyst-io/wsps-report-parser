@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState, useCallback } from 'react';
 import UploadZone from '@/components/UploadZone';
 import ResultCard from '@/components/ResultCard';
-import { parseCSV, validateFile } from '@/lib/csvParser';
+import { parseSourceFile, validateFile } from '@/lib/sourceFile';
 import { transformToFormattedData } from '@/lib/dataTransformer';
 import {
   generateElements,
@@ -22,7 +22,7 @@ import {
 import { ProcessedData } from '@/lib/types';
 
 const STEPS = [
-  'Export the Detailed Expenditure Report from your ERP as a CSV.',
+  'Export the Detailed Expenditure Report from your ERP, as a CSV or an Excel file.',
   'Drop it on the box above.',
   'Check the row counts and the previews.',
   'Download the four files, or all four as one ZIP.',
@@ -53,8 +53,8 @@ export default function Home() {
         return;
       }
 
-      // Parse CSV
-      const parseResult = await parseCSV(file);
+      // Parse the file, CSV or Excel
+      const parseResult = await parseSourceFile(file);
 
       if (parseResult.errors.length > 0) {
         setError(parseResult.errors.join('; '));
