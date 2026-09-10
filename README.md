@@ -94,6 +94,18 @@ into text by its type, because neither blanket rule is safe:
   broken cell visible — read as blank, an error in `descrip_b` would quietly
   merge two accounts into one Budget Tracker row.
 
+### One known difference between the two formats
+
+A row whose cells are all empty is skipped when reading a spreadsheet, but a
+CSV line of `,,,,` is kept by PapaParse as a row of empty strings. So the
+"rows read" count can differ by the number of all-blank rows in the file.
+
+No output file is affected. All four generators skip rows with no account
+code — `generateElements` and `generateChartOfAccounts` test for a non-empty
+value, `generateBudgetTracker` returns early, and `generatePurchaseOrder`
+filters on a non-empty `ponum` — so an all-blank row contributes to none of
+them. The difference is confined to the count shown on screen.
+
 ### Column Mapping
 
 The application maps CSV columns to internal fields:
