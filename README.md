@@ -94,6 +94,19 @@ into text by its type, because neither blanket rule is safe:
   broken cell visible — read as blank, an error in `descrip_b` would quietly
   merge two accounts into one Budget Tracker row.
 
+### Speed
+
+Measured on a 2,399-row export, 3 runs each: the CSV path takes 66-85 ms, the
+Excel path 1,229-1,308 ms — roughly 18x slower for the same report. Transform
+and all four generators add 13-32 ms.
+
+At this size that is about a second and a quarter, which the "Reading your
+file…" state covers. It does not scale: extrapolated to the 100,000 rows
+PRD section 6 targets, the Excel path would take around 52 seconds on the
+browser's main thread, so the tab would be frozen rather than slow. The ERP's
+own format cannot hold that many rows, but a `.xlsx` saved out of Excel can.
+Moving the parse to a Web Worker is the fix if that ever matters.
+
 ### One known difference between the two formats
 
 A row whose cells are all empty is skipped when reading a spreadsheet, but a
