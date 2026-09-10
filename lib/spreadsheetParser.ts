@@ -61,35 +61,47 @@ function cellToString(cell: XLSX.CellObject | undefined): string {
 }
 
 /**
- * Narrows a sheet's declared dimensions to the cells it actually holds.
+ * Works out which cells a sheet actually holds, ignoring the range it claims.
  *
- * A workbook states its own used range, and SheetJS passes that on without
- * checking it. Excel can write a range far larger than the data — a file with
- * two rows in it can declare A1:XFD1048576 — and walking that literally means
- * 17 billion lookups on the browser's main thread, minutes of a frozen tab
- * under a "Reading your file…" message that never changes. Taking the smaller
- * of what the file claims and what it contains costs one pass over the cells
- * that exist.
+ * A workbook states its own used range and SheetJS passes that on without
+ * checking it, so the claim can be wrong in either direction and both hurt:
+ *
+ *   - Too large: Excel writes A1:XFD1048576 for a file holding two rows.
+ *     Walking that literally is 17 billion lookups on the browser's main
+ *     thread — minutes of a frozen tab under a "Reading your file…" message
+ *     that never changes.
+ *   - Too small: a stale dimension of A1:B2 over ten rows of data means the
+ *     rest is never read. That one is silent, and worse for it — the file
+ *     looks like it was read, and the missing rows just are not in the totals.
+ *
+ * The cells present are the only reliable answer, and finding them costs one
+ * pass over them.
  */
-function narrowToPopulated(sheet: XLSX.WorkSheet, declared: XLSX.Range): XLSX.Range {
-  let lastRow = declared.s.r;
-  let lastColumn = declared.s.c;
+function populatedRange(sheet: XLSX.WorkSheet): XLSX.Range | null {
+  let firstRow = Infinity;
+  let firstColumn = Infinity;
+  let lastRow = -Infinity;
+  let lastColumn = -Infinity;
 
   for (const key of Object.keys(sheet)) {
     // Sheet metadata is keyed by a leading "!", cells by their address.
     if (key.startsWith('!')) continue;
 
     const address = XLSX.utils.decode_cell(key);
+    if (!Number.isInteger(address.r) || !Number.isInteger(address.c)) continue;
+    if (address.r < 0 || address.c < 0) continue;
+
+    if (address.r < firstRow) firstRow = address.r;
+    if (address.c < firstColumn) firstColumn = address.c;
     if (address.r > lastRow) lastRow = address.r;
     if (address.c > lastColumn) lastColumn = address.c;
   }
 
+  if (lastRow === -Infinity) return null;
+
   return {
-    s: declared.s,
-    e: {
-      r: Math.min(declared.e.r, lastRow),
-      c: Math.min(declared.e.c, lastColumn),
-    },
+    s: { r: firstRow, c: firstColumn },
+    e: { r: lastRow, c: lastColumn },
   };
 }
 
@@ -100,20 +112,33 @@ function narrowToPopulated(sheet: XLSX.WorkSheet, declared: XLSX.Range): XLSX.Ra
  * and the two formats would disagree about the same file.
  */
 function makeHeadersUnique(headers: string[]): string[] {
-  const seen = new Map<string, number>();
+  // Every name in the row is spoken for before renaming starts, including
+  // ones further right. Headers of ["s1", "s1", "s1_1"] give s1, s1_2, s1_1:
+  // the duplicate skips past the s1_1 that is coming, rather than colliding
+  // with it and letting the later column silently win. PapaParse does the
+  // same, and the two readers have to agree on the same file.
+  const used = new Set(headers.filter((header) => header !== ''));
+  const seen = new Set<string>();
+  const counts = new Map<string, number>();
 
   return headers.map((header) => {
     if (header === '') return '';
 
-    const count = seen.get(header);
-    if (count === undefined) {
-      seen.set(header, 0);
+    if (!seen.has(header)) {
+      seen.add(header);
       return header;
     }
 
-    const next = count + 1;
-    seen.set(header, next);
-    return `${header}_${next}`;
+    let count = counts.get(header) ?? 0;
+    let candidate: string;
+    do {
+      count += 1;
+      candidate = `${header}_${count}`;
+    } while (used.has(candidate));
+
+    counts.set(header, count);
+    used.add(candidate);
+    return candidate;
   });
 }
 
@@ -150,11 +175,10 @@ export async function parseSpreadsheet(file: File): Promise<ParseResult> {
   }
 
   const sheet = workbook.Sheets[sheetName];
-  if (!sheet || !sheet['!ref']) {
+  const range = sheet ? populatedRange(sheet) : null;
+  if (!range) {
     return { data: [], errors: ['No data rows found in the spreadsheet'] };
   }
-
-  const range = narrowToPopulated(sheet, XLSX.utils.decode_range(sheet['!ref']));
 
   // Row 1 is the header row, matching how the CSV export is laid out.
   const rawHeaders: string[] = [];
