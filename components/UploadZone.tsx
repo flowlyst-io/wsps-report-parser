@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useId, useState } from 'react';
+import { ACCEPTED_FILE_TYPES } from '@/lib/sourceFile';
 
 interface UploadZoneProps {
   onFileSelect: (file: File) => void;
@@ -62,7 +63,7 @@ export default function UploadZone({
     <input
       id={inputId}
       type="file"
-      accept=".csv,text/csv"
+      accept={ACCEPTED_FILE_TYPES}
       onChange={handleFileInput}
       className="sr-only"
       disabled={isProcessing}
@@ -187,12 +188,12 @@ export default function UploadZone({
 
           <div className="space-y-1.5">
             <p className="text-2xl font-bold text-ink">
-              {isProcessing ? 'Reading your file…' : 'Drop your CSV here'}
+              {isProcessing ? 'Reading your file…' : 'Drop your report here'}
             </p>
             <p className="text-base text-ink-soft">
               {isProcessing
                 ? 'This takes a few seconds.'
-                : 'or choose a file from your computer'}
+                : 'CSV or Excel — or choose a file from your computer'}
             </p>
           </div>
         </div>
@@ -204,7 +205,7 @@ export default function UploadZone({
             className="absolute inset-0 cursor-pointer rounded-3xl"
           >
             <span className="sr-only">
-              Upload the WSPS Detailed Expenditure Report CSV
+              Upload the WSPS Detailed Expenditure Report, as a CSV or an Excel file
             </span>
           </label>
         )}
