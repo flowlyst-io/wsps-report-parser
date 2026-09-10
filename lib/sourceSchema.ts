@@ -24,5 +24,14 @@ export function collectHeaderErrors(fields: string[] | undefined): string[] {
   const missing = REQUIRED_HEADERS.filter((header) => !fields.includes(header));
   if (missing.length === 0) return [];
 
+  // None of the expected columns are there, so this is almost certainly the
+  // wrong file rather than a report with a column missing. Listing all 32
+  // names at someone who picked the wrong file tells them nothing.
+  if (missing.length === REQUIRED_HEADERS.length) {
+    return [
+      'This does not look like a Detailed Expenditure Report. None of the expected columns are in it — check that the right file was exported.',
+    ];
+  }
+
   return [`Missing required columns: ${missing.join(', ')}`];
 }

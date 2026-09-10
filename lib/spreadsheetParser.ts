@@ -38,8 +38,10 @@ function cellToString(cell: XLSX.CellObject | undefined): string {
       // A real date: show what Excel shows, so the output matches what the
       // same report produces when it is exported as CSV instead.
       if (cell.w) return cell.w.trim();
-      const date = cell.v as Date;
-      return isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+      // A date-typed cell is not guaranteed to hold a Date. Anything else
+      // here is read as text rather than crashing the whole file on one cell.
+      if (!(cell.v instanceof Date)) return String(cell.v).trim();
+      return isNaN(cell.v.getTime()) ? '' : cell.v.toISOString().slice(0, 10);
     }
 
     case 'b':
