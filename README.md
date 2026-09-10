@@ -66,7 +66,7 @@ npm start
 
 ### Data Processing Pipeline
 
-1. **Parsing**: Validates the file, then reads it with PapaParse (`.csv`) or SheetJS (Excel). Both readers return the same rows, so everything after this point is identical for either format.
+1. **Parsing**: Validates the file, then reads it with PapaParse (`.csv`) or SheetJS (Excel). Both readers return rows in the same shape, so everything after this point is the same code for either format. They agree on data; the two documented differences below are in row counting and error wording, not in any output file.
 2. **Data Transformation**:
    - Extracts segments (s1-s12) and descriptions (sd1-sd12, descrip_b)
    - Pads segments with leading zeros to fixed widths
@@ -118,6 +118,12 @@ code — `generateElements` and `generateChartOfAccounts` test for a non-empty
 value, `generateBudgetTracker` returns early, and `generatePurchaseOrder`
 filters on a non-empty `ponum` — so an all-blank row contributes to none of
 them. The difference is confined to the count shown on screen.
+
+Adding the Excel reader also changed the CSV reader's wording in two cases,
+because both now share one header check: a CSV with none of the expected
+columns, and an empty file, get the "does not look like a Detailed
+Expenditure Report" message instead of a list of all 32 column names. Every
+other case is unchanged, and no output file is affected.
 
 ### Column Mapping
 

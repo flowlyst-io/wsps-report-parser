@@ -60,6 +60,11 @@ function cellToString(cell: XLSX.CellObject | undefined): string {
   }
 }
 
+// The largest address a real spreadsheet can hold: 1,048,576 rows by 16,384
+// columns, zero-indexed.
+const MAX_ROW = 1048575;
+const MAX_COLUMN = 16383;
+
 /**
  * Works out which cells a sheet actually holds, ignoring the range it claims.
  *
@@ -90,6 +95,11 @@ function populatedRange(sheet: XLSX.WorkSheet): XLSX.Range | null {
     const address = XLSX.utils.decode_cell(key);
     if (!Number.isInteger(address.r) || !Number.isInteger(address.c)) continue;
     if (address.r < 0 || address.c < 0) continue;
+    // A key that is not really a cell address still decodes to something:
+    // "AAAAAAA1" gives column 321 million. Anything past a real spreadsheet's
+    // limits is not a cell, and honouring it would rebuild the same slow walk
+    // this function exists to prevent.
+    if (address.r > MAX_ROW || address.c > MAX_COLUMN) continue;
 
     if (address.r < firstRow) firstRow = address.r;
     if (address.c < firstColumn) firstColumn = address.c;
@@ -161,6 +171,12 @@ export async function parseSpreadsheet(file: File): Promise<ParseResult> {
       cellDates: true,
       cellNF: true,
       cellText: true,
+      // Everything below reads cells by address out of the sheet object. In
+      // dense mode they live in sheet['!data'] instead and every one of those
+      // lookups returns nothing, so this stays off deliberately. Turning it on
+      // for speed on large workbooks means teaching the reader below to walk
+      // '!data' first — the two go together.
+      dense: false,
     });
   } catch {
     return {
