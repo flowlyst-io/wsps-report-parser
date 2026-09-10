@@ -132,15 +132,23 @@ transformation, which is what rules out the generators hiding a difference.
 Verified independently, by a second party building their own harness against
 merged `main` rather than reusing the first one.
 
+**What this table does not cover.** The same export contains zero date cells
+and zero error cells, no duplicate or blank headers, and an honest declared
+range. So these figures speak for the text, number and boolean branches only.
+Every other branch described above is untested by real data — see the census
+in "Reading Excel cells".
+
 There is no test framework in this project, so this is a one-off measurement
 against one export on one date, not a suite that runs again. It is not a
 guarantee about any future export.
 
 ### Speed
 
-Measured on a 2,399-row export, 3 runs each: the CSV path takes 66-85 ms, the
-Excel path 1,229-1,308 ms — roughly 18x slower for the same report. Transform
-and all four generators add 13-32 ms.
+Measured on a 2,399-row export by two separate harnesses: the CSV path takes
+66-85 ms and the Excel path 1,229-1,308 ms in one, 72 ms and 984 ms in the
+other. So the Excel path is somewhere between 14x and 18x slower for the same
+report — the spread is measurement noise, not a disagreement. Transform and
+all four generators add 13-32 ms.
 
 At this size that is about a second and a quarter, which the "Reading your
 file…" state covers. It does not scale: extrapolated to the 100,000 rows
