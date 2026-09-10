@@ -46,13 +46,73 @@ function cellToString(cell: XLSX.CellObject | undefined): string {
       return cell.v ? 'TRUE' : 'FALSE';
 
     case 'e':
-      // An error cell (#N/A, #REF!) is not a value. Treat it as blank so it
-      // reads the same as an empty cell rather than becoming the text "#N/A".
-      return '';
+      // An error cell (#N/A, #REF!) keeps its text, which is what the same
+      // cell looks like once Excel writes it to a CSV. Reading it as blank
+      // instead would be worse than it sounds: descrip_b is half the key the
+      // Budget Tracker groups on, so a blank there quietly merges two
+      // accounts into one row. Left as text, a broken cell stays visible.
+      return cell.w ? cell.w.trim() : String(cell.v).trim();
 
     default:
       return String(cell.v).trim();
   }
+}
+
+/**
+ * Narrows a sheet's declared dimensions to the cells it actually holds.
+ *
+ * A workbook states its own used range, and SheetJS passes that on without
+ * checking it. Excel can write a range far larger than the data — a file with
+ * two rows in it can declare A1:XFD1048576 — and walking that literally means
+ * 17 billion lookups on the browser's main thread, minutes of a frozen tab
+ * under a "Reading your file…" message that never changes. Taking the smaller
+ * of what the file claims and what it contains costs one pass over the cells
+ * that exist.
+ */
+function narrowToPopulated(sheet: XLSX.WorkSheet, declared: XLSX.Range): XLSX.Range {
+  let lastRow = declared.s.r;
+  let lastColumn = declared.s.c;
+
+  for (const key of Object.keys(sheet)) {
+    // Sheet metadata is keyed by a leading "!", cells by their address.
+    if (key.startsWith('!')) continue;
+
+    const address = XLSX.utils.decode_cell(key);
+    if (address.r > lastRow) lastRow = address.r;
+    if (address.c > lastColumn) lastColumn = address.c;
+  }
+
+  return {
+    s: declared.s,
+    e: {
+      r: Math.min(declared.e.r, lastRow),
+      c: Math.min(declared.e.c, lastColumn),
+    },
+  };
+}
+
+/**
+ * Gives every column a distinct name, matching what PapaParse does to a CSV
+ * with a repeated header: the first keeps the name, later ones get "_1",
+ * "_2" and so on. Without this the last duplicate would overwrite the first
+ * and the two formats would disagree about the same file.
+ */
+function makeHeadersUnique(headers: string[]): string[] {
+  const seen = new Map<string, number>();
+
+  return headers.map((header) => {
+    if (header === '') return '';
+
+    const count = seen.get(header);
+    if (count === undefined) {
+      seen.set(header, 0);
+      return header;
+    }
+
+    const next = count + 1;
+    seen.set(header, next);
+    return `${header}_${next}`;
+  });
 }
 
 /**
@@ -92,14 +152,15 @@ export async function parseSpreadsheet(file: File): Promise<ParseResult> {
     return { data: [], errors: ['No data rows found in the spreadsheet'] };
   }
 
-  const range = XLSX.utils.decode_range(sheet['!ref']);
+  const range = narrowToPopulated(sheet, XLSX.utils.decode_range(sheet['!ref']));
 
   // Row 1 is the header row, matching how the CSV export is laid out.
-  const headers: string[] = [];
+  const rawHeaders: string[] = [];
   for (let column = range.s.c; column <= range.e.c; column++) {
     const cell = sheet[XLSX.utils.encode_cell({ r: range.s.r, c: column })];
-    headers.push(cellToString(cell));
+    rawHeaders.push(cellToString(cell));
   }
+  const headers = makeHeadersUnique(rawHeaders);
 
   const errors = collectHeaderErrors(headers);
   if (errors.length > 0) {

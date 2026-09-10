@@ -89,8 +89,10 @@ into text by its type, because neither blanket rule is safe:
 - **Dates** use the displayed text, not the raw value. A real date cell holds
   a serial number like `45915`, which would otherwise land in the PO Date
   column verbatim.
-- **Everything else** is passed through trimmed, and error cells (`#N/A`,
-  `#REF!`) are read as blank.
+- **Everything else** is passed through trimmed. Error cells (`#N/A`, `#REF!`)
+  keep their text, which is both what Excel writes to a CSV and what keeps a
+  broken cell visible — read as blank, an error in `descrip_b` would quietly
+  merge two accounts into one Budget Tracker row.
 
 ### Column Mapping
 
