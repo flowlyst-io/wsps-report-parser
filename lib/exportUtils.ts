@@ -8,11 +8,13 @@ import {
 } from './types';
 
 /**
- * Converts an array of objects to CSV string WITHOUT headers
+ * Converts an array of objects to a CSV string, with or without a header row.
+ * The row types are keyed by the column names themselves, so the header line
+ * needs no translation.
  */
-function arrayToCSV<T extends object>(data: T[]): string {
+function arrayToCSV<T extends object>(data: T[], includeHeaders: boolean): string {
   return Papa.unparse(data, {
-    header: false, // No headers in the CSV output
+    header: includeHeaders,
   });
 }
 
@@ -34,32 +36,41 @@ function downloadFile(content: string | Blob, filename: string, mimeType: string
 /**
  * Downloads Elements dataset as CSV
  */
-export function downloadElements(data: ElementsRow[]) {
-  const csv = arrayToCSV(data);
+export function downloadElements(data: ElementsRow[], includeHeaders: boolean) {
+  const csv = arrayToCSV(data, includeHeaders);
   downloadFile(csv, 'elements.csv', 'text/csv');
 }
 
 /**
  * Downloads Chart of Accounts dataset as CSV
  */
-export function downloadChartOfAccounts(data: ChartOfAccountsRow[]) {
-  const csv = arrayToCSV(data);
+export function downloadChartOfAccounts(
+  data: ChartOfAccountsRow[],
+  includeHeaders: boolean
+) {
+  const csv = arrayToCSV(data, includeHeaders);
   downloadFile(csv, 'chart_of_accounts.csv', 'text/csv');
 }
 
 /**
  * Downloads Budget Tracker dataset as CSV
  */
-export function downloadBudgetTracker(data: BudgetTrackerRow[]) {
-  const csv = arrayToCSV(data);
+export function downloadBudgetTracker(
+  data: BudgetTrackerRow[],
+  includeHeaders: boolean
+) {
+  const csv = arrayToCSV(data, includeHeaders);
   downloadFile(csv, 'budget_tracker.csv', 'text/csv');
 }
 
 /**
  * Downloads Purchase Order dataset as CSV
  */
-export function downloadPurchaseOrder(data: PurchaseOrderRow[]) {
-  const csv = arrayToCSV(data);
+export function downloadPurchaseOrder(
+  data: PurchaseOrderRow[],
+  includeHeaders: boolean
+) {
+  const csv = arrayToCSV(data, includeHeaders);
   downloadFile(csv, 'purchase_order.csv', 'text/csv');
 }
 
@@ -70,15 +81,16 @@ export async function downloadAllAsZip(
   elements: ElementsRow[],
   chartOfAccounts: ChartOfAccountsRow[],
   budgetTracker: BudgetTrackerRow[],
-  purchaseOrder: PurchaseOrderRow[]
+  purchaseOrder: PurchaseOrderRow[],
+  includeHeaders: boolean
 ) {
   const zip = new JSZip();
 
   // Add each CSV to the ZIP
-  zip.file('elements.csv', arrayToCSV(elements));
-  zip.file('chart_of_accounts.csv', arrayToCSV(chartOfAccounts));
-  zip.file('budget_tracker.csv', arrayToCSV(budgetTracker));
-  zip.file('purchase_order.csv', arrayToCSV(purchaseOrder));
+  zip.file('elements.csv', arrayToCSV(elements, includeHeaders));
+  zip.file('chart_of_accounts.csv', arrayToCSV(chartOfAccounts, includeHeaders));
+  zip.file('budget_tracker.csv', arrayToCSV(budgetTracker, includeHeaders));
+  zip.file('purchase_order.csv', arrayToCSV(purchaseOrder, includeHeaders));
 
   // Generate ZIP and trigger download
   const blob = await zip.generateAsync({ type: 'blob' });

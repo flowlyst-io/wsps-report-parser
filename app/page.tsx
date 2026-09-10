@@ -34,6 +34,7 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>();
   const [rowCount, setRowCount] = useState<number>();
   const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
+  const [includeHeaders, setIncludeHeaders] = useState(true);
 
   const handleFileSelect = useCallback(async (file: File) => {
     // Reset state
@@ -96,9 +97,10 @@ export default function Home() {
       processedData.elements,
       processedData.chartOfAccounts,
       processedData.budgetTracker,
-      processedData.purchaseOrder
+      processedData.purchaseOrder,
+      includeHeaders
     );
-  }, [processedData]);
+  }, [processedData, includeHeaders]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -165,40 +167,64 @@ export default function Home() {
           <div className="mt-12">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 className="text-2xl font-bold text-ink">Your four files</h2>
-              <button
-                type="button"
-                onClick={handleDownloadAll}
-                className="rounded-xl bg-brand px-6 py-3 text-[1.1875rem] font-bold text-white transition-colors duration-150 hover:bg-brand-hover"
-              >
-                Download all (.zip)
-              </button>
+              <div className="flex flex-wrap items-center gap-5">
+                {/* One switch for every download, so the four CSVs and the ZIP
+                    always come out the same way. */}
+                <label className="flex items-center gap-2.5 text-base text-ink-soft">
+                  <input
+                    type="checkbox"
+                    checked={includeHeaders}
+                    onChange={(event) => setIncludeHeaders(event.target.checked)}
+                    className="h-4 w-4 accent-brand"
+                  />
+                  Include a header row
+                </label>
+                <button
+                  type="button"
+                  onClick={handleDownloadAll}
+                  className="rounded-xl bg-brand px-6 py-3 text-[1.1875rem] font-bold text-white transition-colors duration-150 hover:bg-brand-hover"
+                >
+                  Download all (.zip)
+                </button>
+              </div>
             </div>
 
             <div className="mt-6 divide-y divide-line-soft overflow-hidden rounded-2xl border border-line">
               <ResultCard
                 title="Elements"
                 data={processedData.elements}
-                onDownload={() => downloadElements(processedData.elements)}
+                onDownload={() =>
+                  downloadElements(processedData.elements, includeHeaders)
+                }
               />
               <ResultCard
                 title="Chart of Accounts"
                 data={processedData.chartOfAccounts}
                 onDownload={() =>
-                  downloadChartOfAccounts(processedData.chartOfAccounts)
+                  downloadChartOfAccounts(
+                    processedData.chartOfAccounts,
+                    includeHeaders
+                  )
                 }
               />
               <ResultCard
                 title="Budget Tracker"
                 data={processedData.budgetTracker}
                 onDownload={() =>
-                  downloadBudgetTracker(processedData.budgetTracker)
+                  downloadBudgetTracker(
+                    processedData.budgetTracker,
+                    includeHeaders
+                  )
                 }
               />
               <ResultCard
                 title="Purchase Order"
                 data={processedData.purchaseOrder}
                 onDownload={() =>
-                  downloadPurchaseOrder(processedData.purchaseOrder)
+                  downloadPurchaseOrder(
+                    processedData.purchaseOrder,
+                    includeHeaders
+                  )
                 }
               />
             </div>

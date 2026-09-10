@@ -12,6 +12,7 @@ A lightweight, client-side web application that transforms WSPS (West Springfiel
   - **Budget Tracker**: Aggregated budget data by account
   - **Purchase Order**: Filtered purchase order information
 - **Easy Export**: Download individual CSVs or all datasets as a ZIP file
+- **Optional Header Row**: On by default, and one checkbox turns it off for every download
 - **Real-time Preview**: View first 20 rows of each dataset before downloading
 
 ## Getting Started
@@ -48,7 +49,8 @@ npm start
 2. Upload the CSV file using the drag-and-drop zone
 3. Wait for processing (typically 2-5 seconds for large files)
 4. Review the generated datasets in the preview tables
-5. Download individual datasets or all datasets as a ZIP file
+5. Leave "Include a header row" ticked, or untick it to get files with no header row
+6. Download individual datasets or all datasets as a ZIP file
 
 ## Technical Details
 
