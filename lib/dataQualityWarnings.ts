@@ -1,53 +1,49 @@
 import { FormattedDataRow } from './types';
 
 /**
- * Looks for rows whose account code does not have the same number of segments
- * as the rest of the file.
+ * Looks for rows whose account code is a single value with no segments at all.
  *
  * A line that is not really data — a total, a note, a page footer left in by
- * the report writer — still becomes a row, and its first cell becomes a whole
- * account code. `total` joins to the account code "total", which then appears
- * in Chart of Accounts and carries whatever amounts sat on that line into the
- * Budget Tracker. Nothing on screen says anything is wrong.
+ * the report writer — still becomes a row, and its text becomes a whole
+ * account code. `TOTAL` in a segment column joins to the account code "TOTAL",
+ * which then appears in Chart of Accounts and carries whatever amounts sat on
+ * that line into the Budget Tracker, with nothing on screen saying so.
  *
- * Nothing is dropped here, deliberately. Rejecting an odd-looking code would
- * mean deciding what a valid account looks like, and being wrong about that
- * would remove a real account from the output — invisible, where a junk row
- * is at least visible. So this counts and reports, and leaves the data alone.
+ * Such a line puts its text in one cell, so it always yields exactly one part,
+ * whichever segment column it lands in. A real account has several. That is
+ * the whole test, and it deliberately does not look at what the segments
+ * contain: whether a WSPS segment can hold a letter is an open question, and
+ * a rule that guessed wrong about it would be judging real accounts.
  *
- * The comparison is against the file itself rather than a fixed pattern, so it
- * does not care whether segments are numbers or letters, or how many there
- * are. It only cares that one row disagrees with the others.
+ * An earlier version compared each row against the most common segment count
+ * in the file. That was wrong. PRD section 7.2 builds the code with
+ * `segments.filter(Boolean).join("-")` and says empty segments are skipped, so
+ * an account with a blank segment is *specified* to be shorter. Warning on
+ * those would mean warning about data the spec calls valid — and a notice that
+ * appears on good files is one nobody reads.
+ *
+ * Nothing is dropped. Reporting and leaving the data alone is the point: a
+ * junk row in the output is visible, where a real account removed from it
+ * would not be.
+ *
+ * Known limit: a junk line occupying two cells gives two parts and is missed.
+ * Widening the test is possible, but nothing has shown that shape yet, and
+ * calibrating against a file nobody has seen is guessing.
  */
 export function findOddAccountCodes(formattedData: FormattedDataRow[]): string[] {
-  const counts = new Map<number, number>();
+  let singleValued = 0;
 
   for (const row of formattedData) {
     if (!row.FullAccountCode) continue;
-    const segments = row.FullAccountCode.split('-').length;
-    counts.set(segments, (counts.get(segments) ?? 0) + 1);
+    // Relies on no segment value containing a hyphen itself. Checked against
+    // the real export: 0 of 28,788 segment cells contain one.
+    if (row.FullAccountCode.split('-').length === 1) singleValued++;
   }
 
-  // Too few account codes to say what normal looks like.
-  if (counts.size < 2) return [];
+  if (singleValued === 0) return [];
 
-  let usual = 0;
-  let usualCount = 0;
-  for (const [segments, count] of counts) {
-    if (count > usualCount) {
-      usual = segments;
-      usualCount = count;
-    }
-  }
-
-  const odd: string[] = [];
-  for (const [segments, count] of counts) {
-    if (segments === usual) continue;
-    odd.push(
-      `${count.toLocaleString()} ${count === 1 ? 'row has' : 'rows have'} an account code made of ` +
-        `${segments} ${segments === 1 ? 'part' : 'parts'} rather than ${usual}`
-    );
-  }
-
-  return odd;
+  return [
+    `${singleValued.toLocaleString()} ${singleValued === 1 ? 'row has' : 'rows have'} ` +
+      'an account code with no segments in it, where the rest are split into parts by dashes',
+  ];
 }

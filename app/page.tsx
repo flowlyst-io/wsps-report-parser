@@ -170,24 +170,27 @@ export default function Home() {
           </div>
         )}
 
-        {processedData && warnings.length > 0 && (
-          <div
-            role="status"
-            className="mt-8 rounded-2xl border border-accent/30 bg-accent/5 px-5 py-4"
-          >
-            <p className="font-bold text-ink">Worth a look before you use these</p>
-            <ul className="mt-2 space-y-1 text-base text-ink-soft">
-              {warnings.map((warning) => (
-                <li key={warning}>{warning}</li>
-              ))}
-            </ul>
-            <p className="mt-2 text-base text-ink-soft">
-              Nothing has been removed — those rows are in the files below. A
-              line that is not really data, like a total or a note at the end
-              of the report, looks like this.
-            </p>
-          </div>
-        )}
+        {/* The live region is mounted from the first render, empty. A screen
+            reader only announces a region that already existed when its
+            contents changed, so creating it and filling it at the same moment
+            would announce nothing. */}
+        <div role="status">
+          {processedData && warnings.length > 0 && (
+            <div className="mt-8 rounded-2xl border border-accent/30 bg-accent/5 px-5 py-4">
+              <p className="font-bold text-ink">Worth a look before you use these</p>
+              <ul className="mt-2 space-y-1 text-base text-ink-soft">
+                {warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+              <p className="mt-2 text-base text-ink-soft">
+                Nothing has been removed — those rows are in the files below. A
+                line that is not really data, like a total or a note at the end
+                of the report, looks like this.
+              </p>
+            </div>
+          )}
+        </div>
 
         {processedData && (
           <div className="mt-12">
