@@ -127,8 +127,7 @@ The MVP intentionally excludes:
 harnesses. Extrapolated to 100,000 rows the Excel path is around 52 seconds on
 the main thread, so the ~5 second target is met by the CSV path and **not** by
 the Excel path. The ERP's own BIFF2 format cannot hold that many rows, but an
-`.xlsx` saved out of Excel can. Moving the parse to a Web Worker is the fix if
-that ever matters.
+`.xlsx` saved out of Excel can.
 
 ---
 
@@ -342,8 +341,10 @@ Each card includes:
 #### **4. Error States**
 
 * Invalid file type → *“Please upload a CSV or Excel file (.csv, .xls or .xlsx)”*
-* Missing headers → *“The uploaded file is missing required columns: [list].”*
-* Empty file → *“No data rows found.”*
+* Some headers missing → *“Missing required columns: [list]”*
+* No headers recognised → *“This does not look like a Detailed Expenditure Report. None of the expected columns are in it — check that the right file was exported.”* Listing all 32 names at someone who picked the wrong file tells them nothing, so the two cases read differently.
+* Empty file → *“No data rows found in the CSV file”*, or *“No data rows found in the spreadsheet”*
+* Too large → *“File size exceeds 50MB limit”*
 
 ---
 
