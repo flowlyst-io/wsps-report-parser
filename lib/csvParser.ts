@@ -4,6 +4,9 @@ import { ParseResult, collectHeaderErrors } from './sourceSchema';
 
 export type { ParseResult };
 
+/** How many bad rows to name before summarising the rest. */
+const MAX_ROW_ERRORS = 3;
+
 export function parseCSV(file: File): Promise<ParseResult> {
   return new Promise((resolve) => {
     Papa.parse<SourceDataRow>(file, {
@@ -30,10 +33,20 @@ export function parseCSV(file: File): Promise<ParseResult> {
             (error) => error.type === 'FieldMismatch' || error.type === 'Delimiter'
           );
 
-          if (criticalErrors.length > 0) {
-            criticalErrors.forEach((error) => {
-              errors.push(`Row ${error.row}: ${error.message}`);
-            });
+          // One line per bad row, capped. A file whose header row has a
+          // different number of fields to its data rows produces one of these
+          // for every row in it, and all of them end up joined into a single
+          // sentence on screen — 2,399 rows once measured at 142,863
+          // characters, burying the one line worth reading.
+          criticalErrors.slice(0, MAX_ROW_ERRORS).forEach((error) => {
+            errors.push(`Row ${error.row}: ${error.message}`);
+          });
+
+          const hidden = criticalErrors.length - MAX_ROW_ERRORS;
+          if (hidden > 0) {
+            errors.push(
+              `and ${hidden.toLocaleString()} more ${hidden === 1 ? 'row' : 'rows'} with the same kind of problem`
+            );
           }
         }
 
