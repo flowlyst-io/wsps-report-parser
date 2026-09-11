@@ -14,7 +14,7 @@ The **Flowlyst WSPS Detailed Expenditure Report Parser** is a lightweight, clien
 
 Users currently paste the **Detailed Expenditure Report** into a “data sheet,” and several other sheets derive structured outputs like *Elements*, *Chart of Accounts*, *Budget Tracker*, and *Purchase Order* through complex formulas.
 
-This application replaces that manual process by allowing users to **upload the exported CSV file** from their ERP system and automatically generating these four derived datasets, displayed on the website with options to download each as a CSV (or all together as a ZIP).
+This application replaces that manual process by allowing users to **upload the exported report file** from their ERP system, as a CSV or an Excel file and automatically generating these four derived datasets, displayed on the website with options to download each as a CSV (or all together as a ZIP).
 
 No authentication, database, or backend is required — all transformations occur securely in the user’s browser.
 
@@ -61,6 +61,7 @@ The MVP intentionally excludes:
 | Language           | **TypeScript**                        |
 | Styling            | **TailwindCSS**                       |
 | CSV Parsing        | **PapaParse** or equivalent           |
+| Excel Parsing      | **SheetJS**, loaded on demand         |
 | ZIP Generation     | **JSZip**                             |
 | Data Handling      | All client-side (browser memory only) |
 | Deployment         | Static or Vercel-compatible           |
@@ -72,10 +73,10 @@ The MVP intentionally excludes:
 ### **1. Upload**
 
 * User opens the single-page application.
-* A large, branded drop zone invites users to upload their **Detailed Expenditure Report CSV**.
+* A large, branded drop zone invites users to upload their **Detailed Expenditure Report**, as a CSV or an Excel file.
 * File validation:
 
-  * Must be `.csv` file.
+  * Must be a `.csv` or an Excel file (`.xls`, `.xlsx`, `.xlsm`, `.xlsb`). The ERP emits BIFF2, an old binary `.xls`, which is why the Excel reader covers more than `.xlsx`.
   * Must contain required headers (as defined in section 7.1).
 * Once validated, file parses automatically (no submit button).
 
@@ -120,13 +121,21 @@ The MVP intentionally excludes:
 | Memory      | Optimize object creation; use streaming parse where possible.                                  |
 | Resilience  | Gracefully handle malformed rows or missing values.                                            |
 
+**Measured, and where the Excel path falls short of the row above.** On a
+2,399-row export the CSV path takes 66–85 ms and the Excel path
+1,229–1,308 ms — 14× to 18× slower for the same report, by two separate
+harnesses. Extrapolated to 100,000 rows the Excel path is around 52 seconds on
+the main thread, so the ~5 second target is met by the CSV path and **not** by
+the Excel path. The ERP's own BIFF2 format cannot hold that many rows, but an
+`.xlsx` saved out of Excel can.
+
 ---
 
 ## **7. Data Processing Logic**
 
 ### **7.1 Source Data**
 
-The uploaded CSV is the **DETAILED EXPENDITURE REPORT ON** export.
+The uploaded file is the **DETAILED EXPENDITURE REPORT ON** export, as a CSV or an Excel file. Both readers return the same rows, so everything after parsing is one code path.
 It always contains the same headers and structure as the Google Sheets input.
 
 Critical columns used in downstream logic include:
@@ -302,7 +311,7 @@ ORDER BY L
 #### **2. Upload Area**
 
 * Large drop zone with dashed border.
-* Text: *“Drag & drop CSV or click to upload the WSPS Detailed Expenditure Report.”*
+* Text: *“Drop your report here”*, with *“CSV or Excel — or choose a file from your computer”* beneath it.
 * Once uploaded:
 
   * Show filename and row count.
@@ -331,9 +340,11 @@ Each card includes:
 
 #### **4. Error States**
 
-* Invalid file type → *“Please upload a valid CSV file.”*
-* Missing headers → *“The uploaded file is missing required columns: [list].”*
-* Empty file → *“No data rows found.”*
+* Invalid file type → *“Please upload a CSV or Excel file (.csv, .xls or .xlsx)”*
+* Some headers missing → *“Missing required columns: [list]”*
+* No headers recognised → *“This does not look like a Detailed Expenditure Report. None of the expected columns are in it — check that the right file was exported.”* Listing all 32 names at someone who picked the wrong file tells them nothing, so the two cases read differently.
+* Empty file → *“No data rows found in the CSV file”*, or *“No data rows found in the spreadsheet”*
+* Too large → *“File size exceeds 50MB limit”*
 
 ---
 
@@ -351,7 +362,7 @@ Each card includes:
 
 ## **10. Acceptance Criteria**
 
-✅ Uploads a WSPS CSV up to 100,000 rows
+✅ Uploads a WSPS report, CSV or Excel, up to 100,000 rows (see the note under section 6 on Excel at that size)
 ✅ Generates 4 derived datasets with identical logic to current Google Sheets formulas
 ✅ Displays each dataset in the web UI
 ✅ Each dataset can be downloaded individually as CSV
@@ -367,7 +378,7 @@ Each card includes:
 
 * Allow preview filtering/search in result tables.
 * Optional Excel (.xlsx) export.
-* Persist uploaded CSV in browser (IndexedDB).
+* Persist the uploaded report in browser (IndexedDB).
 * Versioning / changelog display.
 * Batch processing of multiple district exports.
 * Drag-and-drop of zipped folder with multiple reports.
