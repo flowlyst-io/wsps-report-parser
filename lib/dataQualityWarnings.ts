@@ -55,7 +55,7 @@ export function findDataQualityWarnings(formattedData: FormattedDataRow[]): stri
   if (singleValued > 0 && multiPart > 0) {
     warnings.push(
       `${singleValued.toLocaleString()} ${singleValued === 1 ? 'row has' : 'rows have'} ` +
-        'an account code with no segments in it, where the rest are split into parts by dashes'
+        'an account code made of one segment, where the rest are split into several parts by dashes'
     );
   }
 
