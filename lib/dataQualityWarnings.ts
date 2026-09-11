@@ -8,8 +8,9 @@ import { FormattedDataRow } from './types';
  * those outcomes reach a file the user then imports:
  *
  *   - Text in a segment column becomes a whole account code. `TOTAL` appears
- *     in Chart of Accounts and carries whatever amounts sat on that line into
- *     the Budget Tracker.
+ *     in Chart of Accounts, in Elements as a segment value of its own, and
+ *     carries whatever amounts sat on that line into the Budget Tracker —
+ *     three of the four files.
  *   - Text in `ponum` leaves the account code empty, so the account-code
  *     checks skip the row — but Purchase Order filters on `ponum` being
  *     present, so the row arrives there with a blank Account.
@@ -42,7 +43,11 @@ export function findDataQualityWarnings(formattedData: FormattedDataRow[]): stri
       // the real export: 0 of 28,788 segment cells contain one.
       if (row.FullAccountCode.split('-').length === 1) singleValued++;
       else multiPart++;
-    } else if (row.ponum) {
+    } else if (row.ponum.trim() !== '') {
+      // Mirrors generatePurchaseOrder's own test exactly. A plain truthiness
+      // check would agree with it only because both readers happen to trim
+      // their values, and a whitespace-only PO number would then be counted
+      // here while never appearing in the file this message points at.
       poWithoutAccount++;
     }
   }
