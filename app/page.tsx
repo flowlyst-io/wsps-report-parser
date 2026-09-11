@@ -6,7 +6,7 @@ import UploadZone from '@/components/UploadZone';
 import ResultCard from '@/components/ResultCard';
 import { parseSourceFile, validateFile } from '@/lib/sourceFile';
 import { transformToFormattedData } from '@/lib/dataTransformer';
-import { findOddAccountCodes } from '@/lib/dataQualityWarnings';
+import { findDataQualityWarnings } from '@/lib/dataQualityWarnings';
 import {
   generateElements,
   generateChartOfAccounts,
@@ -72,7 +72,7 @@ export default function Home() {
 
       // Nothing is dropped on the strength of this — it only points at rows
       // worth looking at before the numbers are trusted.
-      setWarnings(findOddAccountCodes(formattedData));
+      setWarnings(findDataQualityWarnings(formattedData));
 
       // Generate all datasets
       const elements = generateElements(formattedData);

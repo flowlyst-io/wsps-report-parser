@@ -1,49 +1,71 @@
 import { FormattedDataRow } from './types';
 
 /**
- * Looks for rows whose account code is a single value with no segments at all.
+ * Points at rows that look like they are not really data.
  *
- * A line that is not really data — a total, a note, a page footer left in by
- * the report writer — still becomes a row, and its text becomes a whole
- * account code. `TOTAL` in a segment column joins to the account code "TOTAL",
- * which then appears in Chart of Accounts and carries whatever amounts sat on
- * that line into the Budget Tracker, with nothing on screen saying so.
+ * A total, a note, or a page footer left in by the report writer still becomes
+ * a row. What it does next depends on which cell its text lands in, and two of
+ * those outcomes reach a file the user then imports:
  *
- * Such a line puts its text in one cell, so it always yields exactly one part,
- * whichever segment column it lands in. A real account has several. That is
- * the whole test, and it deliberately does not look at what the segments
- * contain: whether a WSPS segment can hold a letter is an open question, and
- * a rule that guessed wrong about it would be judging real accounts.
+ *   - Text in a segment column becomes a whole account code. `TOTAL` appears
+ *     in Chart of Accounts and carries whatever amounts sat on that line into
+ *     the Budget Tracker.
+ *   - Text in `ponum` leaves the account code empty, so the account-code
+ *     checks skip the row — but Purchase Order filters on `ponum` being
+ *     present, so the row arrives there with a blank Account.
  *
- * An earlier version compared each row against the most common segment count
- * in the file. That was wrong. PRD section 7.2 builds the code with
- * `segments.filter(Boolean).join("-")` and says empty segments are skipped, so
- * an account with a blank segment is *specified* to be shorter. Warning on
- * those would mean warning about data the spec calls valid — and a notice that
- * appears on good files is one nobody reads.
+ * Nothing is dropped. Rejecting a row would mean deciding what a valid account
+ * looks like, and being wrong about that would remove a real account from the
+ * output — invisible, where a junk row is at least visible. So these count and
+ * report, and leave the data alone.
  *
- * Nothing is dropped. Reporting and leaving the data alone is the point: a
- * junk row in the output is visible, where a real account removed from it
- * would not be.
+ * Both tests are structural. Neither looks at what a segment contains, because
+ * whether a WSPS segment can hold a letter is an open question, and a rule
+ * that guessed wrong about it would be judging real accounts.
  *
- * Known limit: a junk line occupying two cells gives two parts and is missed.
- * Widening the test is possible, but nothing has shown that shape yet, and
- * calibrating against a file nobody has seen is guessing.
+ * Known limits, both of them one guess away from being worse than useless:
+ *
+ *   - A junk line occupying two cells produces a two-part code and is missed.
+ *   - An account that genuinely uses only one segment produces a one-part code
+ *     and cannot be told apart from junk. Whether WSPS has such accounts is
+ *     unanswered; the message is phrased so it stays true either way, and the
+ *     check stays silent unless the file contains both shapes.
  */
-export function findOddAccountCodes(formattedData: FormattedDataRow[]): string[] {
+export function findDataQualityWarnings(formattedData: FormattedDataRow[]): string[] {
   let singleValued = 0;
+  let multiPart = 0;
+  let poWithoutAccount = 0;
 
   for (const row of formattedData) {
-    if (!row.FullAccountCode) continue;
-    // Relies on no segment value containing a hyphen itself. Checked against
-    // the real export: 0 of 28,788 segment cells contain one.
-    if (row.FullAccountCode.split('-').length === 1) singleValued++;
+    if (row.FullAccountCode) {
+      // Relies on no segment value containing a hyphen itself. Checked against
+      // the real export: 0 of 28,788 segment cells contain one.
+      if (row.FullAccountCode.split('-').length === 1) singleValued++;
+      else multiPart++;
+    } else if (row.ponum) {
+      poWithoutAccount++;
+    }
   }
 
-  if (singleValued === 0) return [];
+  const warnings: string[] = [];
 
-  return [
-    `${singleValued.toLocaleString()} ${singleValued === 1 ? 'row has' : 'rows have'} ` +
-      'an account code with no segments in it, where the rest are split into parts by dashes',
-  ];
+  // Only worth saying when the file holds both shapes. A file where every code
+  // is a single value has no "rest" to contrast against, and a notice flagging
+  // all of it against a claim the reader can disprove is worse than silence.
+  if (singleValued > 0 && multiPart > 0) {
+    warnings.push(
+      `${singleValued.toLocaleString()} ${singleValued === 1 ? 'row has' : 'rows have'} ` +
+        'an account code with no segments in it, where the rest are split into parts by dashes'
+    );
+  }
+
+  if (poWithoutAccount > 0) {
+    warnings.push(
+      `${poWithoutAccount.toLocaleString()} ${poWithoutAccount === 1 ? 'row has' : 'rows have'} ` +
+        'a PO number but no account code, so ' +
+        `${poWithoutAccount === 1 ? 'it appears' : 'they appear'} in Purchase Order with the Account column blank`
+    );
+  }
+
+  return warnings;
 }
