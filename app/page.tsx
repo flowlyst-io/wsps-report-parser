@@ -6,6 +6,7 @@ import UploadZone from '@/components/UploadZone';
 import ResultCard from '@/components/ResultCard';
 import { parseSourceFile, validateFile } from '@/lib/sourceFile';
 import { transformToFormattedData } from '@/lib/dataTransformer';
+import { findOddAccountCodes } from '@/lib/dataQualityWarnings';
 import {
   generateElements,
   generateChartOfAccounts,
@@ -34,12 +35,14 @@ export default function Home() {
   const [fileName, setFileName] = useState<string>();
   const [rowCount, setRowCount] = useState<number>();
   const [processedData, setProcessedData] = useState<ProcessedData | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [includeHeaders, setIncludeHeaders] = useState(true);
 
   const handleFileSelect = useCallback(async (file: File) => {
     // Reset state
     setError(null);
     setProcessedData(null);
+    setWarnings([]);
     setRowCount(undefined);
     setFileName(file.name);
     setIsProcessing(true);
@@ -66,6 +69,10 @@ export default function Home() {
 
       // Transform data
       const formattedData = transformToFormattedData(parseResult.data);
+
+      // Nothing is dropped on the strength of this — it only points at rows
+      // worth looking at before the numbers are trusted.
+      setWarnings(findOddAccountCodes(formattedData));
 
       // Generate all datasets
       const elements = generateElements(formattedData);
@@ -159,6 +166,25 @@ export default function Home() {
             <p className="mt-8 border-t border-line-soft pt-6 text-base text-ink-soft">
               Your file never leaves this computer. It is read in the browser,
               and nothing is uploaded to a server or stored anywhere.
+            </p>
+          </div>
+        )}
+
+        {processedData && warnings.length > 0 && (
+          <div
+            role="status"
+            className="mt-8 rounded-2xl border border-accent/30 bg-accent/5 px-5 py-4"
+          >
+            <p className="font-bold text-ink">Worth a look before you use these</p>
+            <ul className="mt-2 space-y-1 text-base text-ink-soft">
+              {warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+            <p className="mt-2 text-base text-ink-soft">
+              Nothing has been removed — those rows are in the files below. A
+              line that is not really data, like a total or a note at the end
+              of the report, looks like this.
             </p>
           </div>
         )}
