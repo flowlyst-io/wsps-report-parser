@@ -1,4 +1,4 @@
-<!-- BEGIN CODERY TEMPLATE product-owner @ 0.4.0 -->
+<!-- BEGIN CODERY TEMPLATE product-owner @ 0.5.0 -->
 # The wsps-report-parser system
 
 **This block is shared by Tural's product-owner projects and Codery owns it: change it through Codery, never here.** Everything under `## This project` below it is this project's own; Codery writes there only at setup. **This file is the system.**
@@ -48,7 +48,7 @@ pick (`ready` or `tiny` issue) → locate → plan → plan review → execute �
 - **plan review**: a fresh `plan-reviewer`, same words, fixes in place; a gate item goes into the one batched stop; any other critical item the lead settles and adds to Assumed.
 - **execute**: `coder` works the plan, writes the tests it names, runs both verify lines. **The agent running the work never checks it itself; the coder's own tests are not the check.**
 - **small path**: a one-line or copy fix skips locate, plan and plan review; the brief stands in for the plan; the audit still runs, in `full`. This is a size call about the work, and it is not the `tiny` call above, which skips refinement and is his alone.
-- **audit**: a fresh `auditor`, briefed with its own copy of his words (the lead's brief on the small path), checks in one pass: the requirements, QA that runs the real thing and tries it, the visual check through `ui-verifier` when there is a screen, and code review with the security checklist. **A fail blocks the merge.** Fixes go to a fresh `coder`, then a `delta` audit re-checks only what changed. At most 3 rounds; after a third fail, stop that piece, put it in the one batched stop with the open findings, and never merge it (Nizam's default, the same shape as [They keep working](#they-keep-working)). A fail whose only open findings are phases blocked by a gap `## This project` names (no browser tooling, no test data) skips the fix rounds and goes straight to the batched stop the same way. After each round, run `git status --short` and `git log` on the branch: any change the auditor made voids that round, and a fresh `full` audit follows. **Exit:** a `pass`, with no unresolved **Critical** or **Important** findings. Nits get one fix pass with no new audit; the delegate reports anything it changed beyond the Nits, and you check its diff touches only Nit lines, else that change gets an audit.
+- **audit**: a fresh `auditor`, briefed with its own copy of his words (the lead's brief on the small path), checks in one pass: the requirements, QA that runs the real thing and tries it, the visual check through `ui-verifier` when there is a screen, and code review with the security checklist. **A fail blocks the merge.** Fixes go to a fresh `coder`, then a `delta` audit re-checks only what changed. At most 3 rounds; after a third fail, stop that piece, put it in the one batched stop with the open findings, and never merge it (Nizam's default, the same shape as [They keep working](#they-keep-working)). A fail whose only open findings are phases that cannot run without crossing a limit `### How to run and try it` names or one of his gates skips the fix rounds and goes straight to the batched stop the same way. Missing browser tooling or test data is no such case: the auditor uses a browser tool from outside the repo when one is reachable (when none is, adding one is the technology gate, so the phase is reported as that gate) and makes mock data. After each round, run `git status --short` and `git log` on the branch: any change the auditor made voids that round, and a fresh `full` audit follows. **Exit:** a `pass`, with no unresolved **Critical** or **Important** findings. Nits get one fix pass with no new audit; the delegate reports anything it changed beyond the Nits, and you check its diff touches only Nit lines, else that change gets an audit.
 - **CI**: every PR runs CI, and a red CI blocks the merge. Never merge on red.
 - **merge**: you self-merge (squash) once the auditor's `pass`, [verification](#verification) evidence and a green CI are in; the project's versioning rule, if `## This project` names one, is part of that evidence. His merge is not a gate. If auto mode denies `gh pr merge`, it is the harness, not this contract: that denial goes into the one batched stop, not a mid-loop question.
 - **tell him**: after the merge, tell him what to check ([Delivery](#delivery-to-tural)). Show him a preview only when he asks for one in the session.
@@ -106,7 +106,7 @@ He never reads the code; the failure to defend against is **an agent tuning the 
 2. **An empty or skipped check is red, never green.**
 3. **A claim about accuracy needs something independent to check against.** Grading the work against its own output is not verification, however green it looks. **What that reference is, and how it gets made, is Tural's call**, raised in refinement's round when foreseen; do not design it for him. In a build with no reference, the report is **descriptive** (what was measured, in what units, over what input, never how right it is) and is listed under Assumed, never a stop.
 4. **Anything Tural authors as a reference is never written or edited by an agent.** You may read it, and you may report it missing or malformed. You may never supply or correct a value in it.
-5. **He checks by using it:** before a done-claim on anything he sees, exercise the real thing and report how he can try it; the auditor runs it as `### How to run and try it` says.
+5. **He checks by using it:** before a done-claim on anything he sees, exercise the real thing and report how he can try it; the auditor works out how to run it from the project and the work, within the limits `### How to run and try it` sets.
 6. The project's checks are run with the test command in `## This project`, reported with ran and skipped counts; the executor runs the plan's live checks, and at the final pre-merge SHA the suite runs once.
 
 ## Delivery to Tural
@@ -140,12 +140,12 @@ So: no roadmap, no phased plan, no MVP split, no feature list, no success criter
 
 ### How to run and try it
 
-- **Start command:** `npm run dev`, then open http://localhost:3000 (`package.json` script `dev` is `next dev`; the README's Installation steps).
-- **Browser tool:** none. There is no browser tooling in this repo; adding Playwright is his technology gate.
-- **Test data:** real exports are WSPS customer data (no customer data goes in this repo); what the auditor may upload instead is not stated — ask Tural.
-- **Never touch:** never commit a CSV (gitignored, as are Excel files in `.gitignore`); Vercel and every deploy are Tural's, agents never deploy.
+- **What it is, and how it is generally run:** a client-side Next.js web app, started locally from its dev script. Everything runs in the browser; nothing is sent to a server.
+- **How it is looked at:** a screen, driven by a browser tool from outside the repo (the auditor's own). The tool lives outside the project and nothing is added to it, so no manifest or lockfile changes and no technology gate is crossed: the gates here bind what lands in the repo, and adding a browser library or a test framework to the repo stays his word first.
+- **What it is tried on:** a mock export you make in a scratch folder outside the clone, in the shape the code reads; never real WSPS data. Mock data exercises what the README, the PRD and the issue say and never decides what the product does.
+- **Never touch:** never commit a CSV (gitignored, as are Excel files in `.gitignore`); no customer data in this repo, in a fixture, in evidence or in a screenshot; Vercel and every deploy are Tural's, agents never deploy.
 
-*Facts only; an unknown slot says so.*
+*General, not exact: the agent works out commands, inputs and data from the project as it is now and the work at hand. The limits here are hard.*
 
 ### Deploy
 
