@@ -14,3 +14,5 @@ What is in use in this repo, and why each piece is here. This is the record the 
 
 | What | Why it's here | Decision record |
 |---|---|---|
+
+**In use before the template** (named in backticks so the `SessionStart` check finds them; they are the dependencies and dev dependencies in `package.json`): `@tailwindcss/postcss`, `@types/node`, `@types/papaparse`, `@types/react`, `@types/react-dom`, `eslint`, `eslint-config-next`, `jszip`, `next`, `papaparse`, `react`, `react-dom`, `tailwindcss`, `typescript`, `xlsx`.

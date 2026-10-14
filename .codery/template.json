@@ -1,6 +1,6 @@
 {
   "template": "product-owner",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "params": {
     "project_name": "wsps-report-parser",
     "test_command": "npm run lint && npm run build",
