@@ -56,3 +56,8 @@ next-env.d.ts
 # A shared .claude/settings.json can still be committed.
 .claude/settings.local.json
 .claude/worktrees/
+
+# Codery: gate telemetry, run files and worktrees stay local
+.codery/telemetry/
+.codery/run/
+.worktrees/
