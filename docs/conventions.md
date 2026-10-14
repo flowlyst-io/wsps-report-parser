@@ -6,6 +6,6 @@ The house style for writing code in this repo: how *this* codebase does things, 
 
 ## Entries
 
-Each entry is: **Rule** → **Why** → **Minimal example** → **Gotcha**. Entries arrive from the reviewer noticing that a change established a convention.
+Each entry is: **Rule** → **Why** → **Minimal example** → **Gotcha**. Entries arrive from the auditor noticing that a change established a convention.
 
 *(none yet)*
